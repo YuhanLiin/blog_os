@@ -1,3 +1,5 @@
+use core::panic::PanicInfo;
+
 #[repr(u32)]
 pub enum QemuExitCode {
     Success = 0x10,
@@ -13,7 +15,14 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
-#[cfg(test)]
+pub fn test_panic_handler(info: &PanicInfo) -> ! {
+    serial_println!("Failed");
+    serial_println!("Error: {}", info);
+
+    exit_qemu(QemuExitCode::Failed);
+    loop {}
+}
+
 pub fn test_runner(tests: &[&dyn Fn()]) {
     serial_println!("Running {} tests", tests.len());
     for test in tests {
