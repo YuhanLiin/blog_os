@@ -143,3 +143,29 @@ macro_rules! println {
     () => ($crate::print!("\n"));
     ($($args:tt)*) => ($crate::print!("{}\n", format_args!($($args)*)));
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    test!(test_println {
+        println!("Simple output");
+    });
+
+    test!(test_print_many {
+        for _ in 0..200 {
+            println!("output");
+        }
+    });
+
+    test!(test_print_output {
+        let s = "Single line";
+        print!("{}", s);
+
+        let writer = WRITER.lock();
+        for (i, c) in s.chars().enumerate() {
+            let schar = writer.buffer.chars[writer.row_position][i].read();
+            assert_eq!(char::from(schar.ascii_character), c);
+        }
+    });
+}
