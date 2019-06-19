@@ -13,7 +13,7 @@ use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     test_main();
-    loop {}
+    blog_os::hlt_loop();
 }
 
 #[panic_handler]

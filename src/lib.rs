@@ -14,17 +14,22 @@ pub mod vga_buffer;
 pub mod gdt;
 pub mod interrupts;
 
+#[cfg(test)]
+use core::panic::PanicInfo;
 pub use testing::*;
 
 // For integration testing
-
-#[cfg(test)]
-use core::panic::PanicInfo;
 
 #[panic_handler]
 #[cfg(test)]
 fn panic(info: &PanicInfo) -> ! {
     testing::test_panic_handler(info)
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 pub fn init() {
@@ -38,5 +43,5 @@ pub fn init() {
 pub extern "C" fn _start() -> ! {
     init();
     test_main();
-    loop {}
+    hlt_loop();
 }

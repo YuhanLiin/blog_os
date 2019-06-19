@@ -20,14 +20,14 @@ lazy_static! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     test_main();
-    loop {}
+    blog_os::hlt_loop();
 }
 
 fn fail(error: &str) -> ! {
     serial_println!("[failed]");
     serial_println!("{}", error);
     exit_qemu(QemuExitCode::Failed);
-    loop {}
+    blog_os::hlt_loop();
 }
 
 fn check_location(info: &PanicInfo) {
@@ -79,7 +79,7 @@ fn panic(info: &PanicInfo) -> ! {
     serial_println!("[Ok]");
 
     exit_qemu(QemuExitCode::Success);
-    loop {}
+    blog_os::hlt_loop();
 }
 
 #[allow(unreachable_code)]

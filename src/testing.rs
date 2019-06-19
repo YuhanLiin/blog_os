@@ -20,7 +20,7 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("Error: {}", info);
 
     exit_qemu(QemuExitCode::Failed);
-    loop {}
+    crate::hlt_loop()
 }
 
 pub fn test_runner(tests: &[&dyn Fn()]) {

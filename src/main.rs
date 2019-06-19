@@ -12,7 +12,7 @@ use core::panic::PanicInfo;
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
 
-    loop {}
+    blog_os::hlt_loop();
 }
 
 #[panic_handler]
@@ -33,5 +33,5 @@ pub extern "C" fn _start() -> ! {
         println!("Hello World!");
     }
 
-    loop {}
+    blog_os::hlt_loop();
 }
