@@ -11,6 +11,7 @@ pub mod serial;
 pub mod testing;
 #[macro_use]
 pub mod vga_buffer;
+pub mod gdt;
 pub mod interrupts;
 
 pub use testing::*;
@@ -27,7 +28,9 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
+    interrupts::init_pics();
 }
 
 #[cfg(test)]

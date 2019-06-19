@@ -130,7 +130,10 @@ lazy_static! {
 
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
 }
 
 #[macro_export]
@@ -160,12 +163,14 @@ mod test {
 
     test!(test_print_output {
         let s = "Single line";
-        print!("{}", s);
 
-        let writer = WRITER.lock();
-        for (i, c) in s.chars().enumerate() {
-            let schar = writer.buffer.chars[writer.row_position][i].read();
-            assert_eq!(char::from(schar.ascii_character), c);
-        }
+        x86_64::instructions::interrupts::without_interrupts(|| {
+            print!("\n{}", s);
+            let writer = WRITER.lock();
+            for (i, c) in s.chars().enumerate() {
+                let schar = writer.buffer.chars[writer.row_position][i].read();
+                assert_eq!(char::from(schar.ascii_character), c);
+            }
+        });
     });
 }

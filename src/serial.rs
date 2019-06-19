@@ -12,10 +12,13 @@ lazy_static! {
 
 pub fn _print(arg: core::fmt::Arguments) {
     use core::fmt::Write;
-    SERIAL1
-        .lock()
-        .write_fmt(arg)
-        .expect("Write to serial failed");
+
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        SERIAL1
+            .lock()
+            .write_fmt(arg)
+            .expect("Write to serial failed");
+    });
 }
 
 #[macro_export]
