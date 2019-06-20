@@ -4,7 +4,8 @@
 #![test_runner(blog_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
-use blog_os::{print, println};
+use blog_os::println;
+use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -21,8 +22,9 @@ fn panic(info: &PanicInfo) -> ! {
     blog_os::test_panic_handler(info)
 }
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     blog_os::init();
 
     #[cfg(test)]
@@ -30,7 +32,45 @@ pub extern "C" fn _start() -> ! {
 
     #[cfg(not(test))]
     {
+        use blog_os::memory;
         println!("Hello World!");
+
+        let mut mapper = unsafe { memory::init(boot_info.physical_memory_offset) };
+        let addresses = [
+            // the identity-mapped vga buffer page
+            0xb8000,
+            // some code page
+            0x20010a,
+            // some stack page
+            0x57ac_001f_fe48,
+            // virtual address mapped to physical address 0
+            boot_info.physical_memory_offset,
+        ];
+
+        use x86_64::{
+            structures::paging::{MapperAllSizes, Page},
+            PhysAddr, VirtAddr,
+        };
+
+        for &address in &addresses {
+            let virt = VirtAddr::new(address);
+            let phys = mapper.translate_addr(virt);
+            println!("{:?} -> {:?}", virt, phys);
+        }
+
+        let mut frame_allocator =
+            unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
+        let page = Page::containing_address(VirtAddr::new(0xdeadbeef));
+
+        memory::create_mapping(
+            PhysAddr::new(0xb8000),
+            page,
+            &mut mapper,
+            &mut frame_allocator,
+        );
+
+        let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+        unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
     }
 
     blog_os::hlt_loop();
