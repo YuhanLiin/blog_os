@@ -1,23 +1,9 @@
-use alloc::alloc::{GlobalAlloc, Layout};
-use core::ptr::null_mut;
 use x86_64::{
     structures::paging::{
         mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
     },
     VirtAddr,
 };
-
-//pub struct Dummy;
-
-//unsafe impl GlobalAlloc for Dummy {
-//unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
-//null_mut()
-//}
-
-//unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-//unimplemented!();
-//}
-//}
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
@@ -47,4 +33,31 @@ pub fn init_heap(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use alloc::{boxed::Box, vec, vec::Vec};
+
+    test!(simple_alloc {
+        let heap_val = Box::new(41);
+        assert_eq!(*heap_val, 41);
+    });
+
+    test!(large_vec {
+        let n = 1000;
+        let mut vec = Vec::new();
+        for i in 0..n {
+            vec.push(i);
+        }
+        assert_eq!(vec.iter().sum::<u32>(), (n-1) * n / 2);
+    });
+
+    test!(many_boxes {
+        for i in 0..10000 {
+            let val = Box::new(i);
+            assert_eq!(*val, i);
+        }
+    });
 }

@@ -19,10 +19,8 @@ pub mod gdt;
 pub mod interrupts;
 pub mod memory;
 
-#[cfg(test)]
-use bootloader::{entry_point, BootInfo};
-#[cfg(test)]
-use core::panic::PanicInfo;
+use bootloader::BootInfo;
+use x86_64::structures::paging::{FrameAllocator, MapperAllSizes, Size4KiB};
 
 use linked_list_allocator::LockedHeap;
 pub use testing::*;
@@ -33,10 +31,16 @@ pub fn hlt_loop() -> ! {
     }
 }
 
-pub fn init() {
+pub fn init(boot_info: &'static BootInfo) -> (impl MapperAllSizes, impl FrameAllocator<Size4KiB>) {
     gdt::init();
     interrupts::init_idt();
     interrupts::init_pics();
+
+    let mut mapper = unsafe { memory::init(boot_info.physical_memory_offset) };
+    let mut frame_allocator = unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+
+    (mapper, frame_allocator)
 }
 
 #[global_allocator]
@@ -48,6 +52,12 @@ fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
 }
 
 // For integration testing
+
+#[cfg(test)]
+use bootloader::entry_point;
+#[cfg(test)]
+use core::panic::PanicInfo;
+
 #[panic_handler]
 #[cfg(test)]
 fn panic(info: &PanicInfo) -> ! {
@@ -58,8 +68,8 @@ fn panic(info: &PanicInfo) -> ! {
 entry_point!(kernel_main);
 
 #[cfg(test)]
-fn kernel_main(_boot_info: &'static BootInfo) -> ! {
-    init();
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    init(boot_info);
     test_main();
     hlt_loop();
 }
