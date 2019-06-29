@@ -6,6 +6,7 @@
 
 extern crate alloc;
 
+#[cfg(not(test))]
 use blog_os::println;
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
@@ -27,56 +28,23 @@ fn panic(info: &PanicInfo) -> ! {
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    let (mut mapper, mut frame_allocator) = blog_os::init(boot_info);
-
     #[cfg(test)]
-    test_main();
+    {
+        blog_os::init(boot_info).unwrap();
+        test_main();
+    }
 
     #[cfg(not(test))]
     {
         use alloc::{boxed::Box, vec};
-        use blog_os::memory;
+
+        blog_os::init(boot_info).unwrap();
 
         println!("Hello World!");
-
         let x = Box::new(41);
         println!("Heap box at {:p}", x);
         let y = vec![1, 2, 3];
         println!("vec {:?}", y);
-
-        let addresses = [
-            // the identity-mapped vga buffer page
-            0xb8000,
-            // some code page
-            0x20010a,
-            // some stack page
-            0x57ac_001f_fe48,
-            // virtual address mapped to physical address 0
-            boot_info.physical_memory_offset,
-        ];
-
-        use x86_64::{
-            structures::paging::{MapperAllSizes, Page},
-            PhysAddr, VirtAddr,
-        };
-
-        for &address in &addresses {
-            let virt = VirtAddr::new(address);
-            let phys = mapper.translate_addr(virt);
-            println!("{:?} -> {:?}", virt, phys);
-        }
-
-        let page = Page::containing_address(VirtAddr::new(0xdeadbeef));
-
-        memory::create_mapping(
-            PhysAddr::new(0xb8000),
-            page,
-            &mut mapper,
-            &mut frame_allocator,
-        );
-
-        let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-        unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
     }
 
     blog_os::hlt_loop();

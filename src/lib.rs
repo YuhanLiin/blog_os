@@ -20,6 +20,8 @@ pub mod interrupts;
 pub mod memory;
 
 use bootloader::BootInfo;
+use lazy_static::lazy_static;
+use spin::Mutex;
 use x86_64::structures::paging::{FrameAllocator, MapperAllSizes, Size4KiB};
 
 use linked_list_allocator::LockedHeap;
@@ -31,16 +33,31 @@ pub fn hlt_loop() -> ! {
     }
 }
 
-pub fn init(boot_info: &'static BootInfo) -> (impl MapperAllSizes, impl FrameAllocator<Size4KiB>) {
-    gdt::init();
-    interrupts::init_idt();
-    interrupts::init_pics();
+// Initialization procedure should only ever run once, so we use a flag to ensure that
+lazy_static! {
+    static ref INIT_FLAG: Mutex<bool> = Mutex::new(false);
+}
 
-    let mut mapper = unsafe { memory::init(boot_info.physical_memory_offset) };
-    let mut frame_allocator = unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
-    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+pub fn init(
+    boot_info: &'static BootInfo,
+) -> Result<(impl MapperAllSizes, impl FrameAllocator<Size4KiB>), ()> {
+    if *INIT_FLAG.lock() {
+        Err(())
+    } else {
+        *INIT_FLAG.lock() = true;
 
-    (mapper, frame_allocator)
+        gdt::init();
+        interrupts::init_idt();
+        interrupts::init_pics();
+
+        let mut mapper = unsafe { memory::init(boot_info.physical_memory_offset) };
+        let mut frame_allocator =
+            unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
+        allocator::init_heap(&mut mapper, &mut frame_allocator)
+            .expect("heap initialization failed");
+
+        Ok((mapper, frame_allocator))
+    }
 }
 
 #[global_allocator]
@@ -69,7 +86,7 @@ entry_point!(kernel_main);
 
 #[cfg(test)]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    init(boot_info);
+    init(boot_info).unwrap();
     test_main();
     hlt_loop();
 }
