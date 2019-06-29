@@ -32,20 +32,23 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     {
         blog_os::init(boot_info).unwrap();
         test_main();
+        blog_os::hlt_loop();
     }
 
     #[cfg(not(test))]
     {
-        use alloc::{boxed::Box, vec};
+        use alloc::boxed::Box;
+        use blog_os::keyboard;
 
         blog_os::init(boot_info).unwrap();
+        let printer = keyboard::KeyPrinter {};
+        let mut runner = keyboard::KEYBOARD_TASK_RUNNER.lock();
 
-        println!("Hello World!");
-        let x = Box::new(41);
-        println!("Heap box at {:p}", x);
-        let y = vec![1, 2, 3];
-        println!("vec {:?}", y);
+        runner.add_task(Box::new(printer));
+        loop {
+            runner.poll();
+            // Need this instruction to prevent tight polling from starving the interrupts
+            x86_64::instructions::hlt();
+        }
     }
-
-    blog_os::hlt_loop();
 }
