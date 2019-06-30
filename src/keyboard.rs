@@ -8,9 +8,7 @@ lazy_static! {
         Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1));
 }
 
-lazy_static! {
-    static ref SCANCODE: Mutex<Option<u8>> = Mutex::new(None);
-}
+static SCANCODE: Mutex<Option<u8>> = Mutex::new(None);
 
 pub fn update_scancode(scancode: u8) {
     *SCANCODE.lock() = Some(scancode);
