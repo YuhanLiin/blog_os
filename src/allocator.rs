@@ -37,8 +37,7 @@ pub fn init_heap(
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use alloc::{boxed::Box, vec, vec::Vec};
+    use alloc::{boxed::Box, vec::Vec};
 
     test!(simple_alloc {
         let heap_val = Box::new(41);

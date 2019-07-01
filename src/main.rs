@@ -44,7 +44,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
         let printer = keyboard::KeyPrinter {};
         let mut runner = keyboard::KEYBOARD_TASK_RUNNER.lock();
 
-        runner.add_task(Box::new(printer));
+        runner.add_listener(Box::new(printer));
         loop {
             runner.poll();
             // Need this instruction to prevent tight polling from starving the interrupts
