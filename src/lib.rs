@@ -15,9 +15,9 @@ pub mod testing;
 #[macro_use]
 pub mod vga_buffer;
 pub mod allocator;
+pub mod event;
 pub mod gdt;
 pub mod interrupts;
-pub mod keyboard;
 pub mod memory;
 
 use bootloader::BootInfo;

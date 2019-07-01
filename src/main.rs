@@ -37,12 +37,24 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     #[cfg(not(test))]
     {
-        use alloc::boxed::Box;
-        use blog_os::keyboard;
-
         blog_os::init(boot_info).unwrap();
-        let printer = keyboard::KeyPrinter {};
-        let mut runner = keyboard::KEYBOARD_TASK_RUNNER.lock();
+
+        use alloc::boxed::Box;
+
+        //use blog_os::event::keyboard;
+        //let printer = keyboard::KeyPrinter {};
+        //let mut runner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
+
+        //runner.add_listener(Box::new(printer));
+        //loop {
+        //runner.poll();
+        //// Need this instruction to prevent tight polling from starving the interrupts
+        //x86_64::instructions::hlt();
+        //}
+
+        use blog_os::event::timer;
+        let printer = timer::TimerPrinter {};
+        let mut runner = timer::TIMER_EVENT_DISPATCHER.lock();
 
         runner.add_listener(Box::new(printer));
         loop {

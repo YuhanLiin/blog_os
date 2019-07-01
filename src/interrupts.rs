@@ -1,5 +1,5 @@
+use crate::event;
 use crate::gdt;
-use crate::keyboard;
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
 use spin::Mutex;
@@ -63,6 +63,8 @@ extern "x86-interrupt" fn double_fault_handler(stack_frame: &mut InterruptStackF
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
+    event::timer::update_tick();
+
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer as u8)
@@ -72,7 +74,7 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut InterruptSt
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
     let mut port = Port::new(0x60);
     let scancode: u8 = unsafe { port.read() };
-    keyboard::update_scancode(scancode);
+    event::keyboard::update_scancode(scancode);
 
     unsafe {
         PICS.lock()
