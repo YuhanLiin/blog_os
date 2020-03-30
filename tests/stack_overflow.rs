@@ -41,7 +41,7 @@ fn init_test_idt() {
 extern "x86-interrupt" fn test_double_fault_handler(
     _stack_frame: &mut InterruptStackFrame,
     _err: u64,
-) {
+) -> ! {
     serial_println!("[Ok]");
     exit_qemu(QemuExitCode::Success);
     panic!("WTF should have exited");

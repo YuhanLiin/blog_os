@@ -39,8 +39,6 @@ test!(page_map {
     let addresses = [
         // some code page
         0x20010a,
-        // some stack page
-        0x57ac_001f_fe48,
     ];
 
     for &address in &addresses {

@@ -11,6 +11,8 @@ use blog_os::println;
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
+use alloc::boxed::Box;
+
 #[panic_handler]
 #[cfg(not(test))]
 fn panic(info: &PanicInfo) -> ! {
@@ -39,28 +41,34 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     {
         blog_os::init(boot_info).unwrap();
 
-        use alloc::boxed::Box;
+        keyboard_main();
+    }
+}
 
-        //use blog_os::event::keyboard;
-        //let printer = keyboard::KeyPrinter {};
-        //let mut runner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
+#[cfg(not(test))]
+fn timer_printer_main() -> ! {
+    use blog_os::event::timer;
+    let printer = timer::TimerPrinter {};
+    let mut runner = timer::TIMER_EVENT_DISPATCHER.lock();
 
-        //runner.add_listener(Box::new(printer));
-        //loop {
-        //runner.poll();
-        //// Need this instruction to prevent tight polling from starving the interrupts
-        //x86_64::instructions::hlt();
-        //}
+    runner.add_listener(Box::new(printer));
+    loop {
+        runner.poll();
+        // Need this instruction to prevent tight polling from starving the interrupts
+        x86_64::instructions::hlt();
+    }
+}
 
-        use blog_os::event::timer;
-        let printer = timer::TimerPrinter {};
-        let mut runner = timer::TIMER_EVENT_DISPATCHER.lock();
+#[cfg(not(test))]
+fn keyboard_main() -> ! {
+    use blog_os::event::keyboard;
+    let printer = keyboard::KeyPrinter {};
+    let mut runner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
 
-        runner.add_listener(Box::new(printer));
-        loop {
-            runner.poll();
-            // Need this instruction to prevent tight polling from starving the interrupts
-            x86_64::instructions::hlt();
-        }
+    runner.add_listener(Box::new(printer));
+    loop {
+        runner.poll();
+        // Need this instruction to prevent tight polling from starving the interrupts
+        x86_64::instructions::hlt();
     }
 }

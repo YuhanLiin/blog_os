@@ -1,12 +1,13 @@
 use super::Listener;
 use alloc::{boxed::Box, vec::Vec};
 use lazy_static::lazy_static;
-use pc_keyboard::{layouts, DecodedKey, Keyboard, ScancodeSet1};
+use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use spin::Mutex;
 
 lazy_static! {
-    static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
-        Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1));
+    static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = Mutex::new(
+        Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore)
+    );
 }
 
 // This lock is accessed by keyboard interrupt, so any other contention should
@@ -49,7 +50,7 @@ impl KeyboardEventDispatcher {
 
     // Returns a handle (listener address) that can be used to remove the listener
     pub fn add_listener(&mut self, listener: KeyboardListener) -> u64 {
-        let handle = listener.as_ref() as *const (_) as *const u64 as u64;
+        let handle = listener.as_ref() as *const _ as *const u64 as u64;
         self.listeners.push(listener);
         handle
     }
@@ -58,7 +59,7 @@ impl KeyboardEventDispatcher {
         let result = self
             .listeners
             .iter()
-            .map(|l| l.as_ref() as *const (_) as *const u64 as u64)
+            .map(|l| l.as_ref() as *const _ as *const u64 as u64)
             .enumerate()
             .find(|(_, n)| *n == handle);
 

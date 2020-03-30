@@ -23,7 +23,10 @@ pub mod memory;
 use bootloader::BootInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use x86_64::structures::paging::{FrameAllocator, MapperAllSizes, Size4KiB};
+use x86_64::{
+    structures::paging::{FrameAllocator, MapperAllSizes, Size4KiB},
+    VirtAddr,
+};
 
 use linked_list_allocator::LockedHeap;
 pub use testing::*;
@@ -51,7 +54,8 @@ pub fn init(
         interrupts::init_idt();
         interrupts::init_pics();
 
-        let mut mapper = unsafe { memory::init(boot_info.physical_memory_offset) };
+        let physical_memory_offset = VirtAddr::new(boot_info.physical_memory_offset);
+        let mut mapper = unsafe { memory::init(physical_memory_offset) };
         let mut frame_allocator =
             unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
         allocator::init_heap(&mut mapper, &mut frame_allocator)

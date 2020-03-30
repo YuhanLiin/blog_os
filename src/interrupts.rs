@@ -58,7 +58,10 @@ extern "x86-interrupt" fn page_fault_handler(
     );
 }
 
-extern "x86-interrupt" fn double_fault_handler(stack_frame: &mut InterruptStackFrame, _err: u64) {
+extern "x86-interrupt" fn double_fault_handler(
+    stack_frame: &mut InterruptStackFrame,
+    _err: u64,
+) -> ! {
     panic!("Exception: Double Fault:\n{:#?}", stack_frame);
 }
 
