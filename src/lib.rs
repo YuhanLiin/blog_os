@@ -28,7 +28,6 @@ use x86_64::{
     VirtAddr,
 };
 
-use linked_list_allocator::LockedHeap;
 pub use testing::*;
 
 pub fn hlt_loop() -> ! {
@@ -64,9 +63,6 @@ pub fn init(
         Ok((mapper, frame_allocator))
     }
 }
-
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {

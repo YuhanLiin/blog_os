@@ -11,8 +11,6 @@ use blog_os::println;
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
 
-use alloc::boxed::Box;
-
 #[panic_handler]
 #[cfg(not(test))]
 fn panic(info: &PanicInfo) -> ! {
@@ -47,7 +45,9 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
 #[cfg(not(test))]
 fn timer_printer_main() -> ! {
+    use alloc::boxed::Box;
     use blog_os::event::timer;
+
     let printer = timer::TimerPrinter {};
     let mut runner = timer::TIMER_EVENT_DISPATCHER.lock();
 
@@ -61,7 +61,9 @@ fn timer_printer_main() -> ! {
 
 #[cfg(not(test))]
 fn keyboard_main() -> ! {
+    use alloc::boxed::Box;
     use blog_os::event::keyboard;
+
     let printer = keyboard::KeyPrinter {};
     let mut runner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
 
