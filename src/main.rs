@@ -39,37 +39,25 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     {
         blog_os::init(boot_info).unwrap();
 
-        keyboard_main();
+        event_main();
     }
 }
 
 #[cfg(not(test))]
-fn timer_printer_main() -> ! {
+fn event_main() -> ! {
     use alloc::boxed::Box;
-    use blog_os::event::timer;
+    use blog_os::event::{keyboard, timer};
 
-    let printer = timer::TimerPrinter {};
-    let mut runner = timer::TIMER_EVENT_DISPATCHER.lock();
+    let keyprinter = keyboard::KeyPrinter {};
+    let mut keyrunner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
+    let timeprinter = timer::TimerPrinter {};
+    let mut timerunner = timer::TIMER_EVENT_DISPATCHER.lock();
 
-    runner.add_listener(Box::new(printer));
+    keyrunner.add_listener(Box::new(keyprinter));
+    timerunner.add_listener(Box::new(timeprinter));
     loop {
-        runner.poll();
-        // Need this instruction to prevent tight polling from starving the interrupts
-        x86_64::instructions::hlt();
-    }
-}
-
-#[cfg(not(test))]
-fn keyboard_main() -> ! {
-    use alloc::boxed::Box;
-    use blog_os::event::keyboard;
-
-    let printer = keyboard::KeyPrinter {};
-    let mut runner = keyboard::KEYBOARD_EVENT_DISPATCHER.lock();
-
-    runner.add_listener(Box::new(printer));
-    loop {
-        runner.poll();
+        keyrunner.poll();
+        timerunner.poll();
         // Need this instruction to prevent tight polling from starving the interrupts
         x86_64::instructions::hlt();
     }

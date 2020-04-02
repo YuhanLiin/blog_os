@@ -34,7 +34,7 @@ impl KeyboardEventDispatcher {
         self.poll_key(scancode);
     }
 
-    pub fn poll_key(&mut self, mut scancode: Option<u8>) {
+    fn poll_key(&mut self, mut scancode: Option<u8>) {
         let mut keyboard = KEYBOARD.lock();
 
         if let Some(scancode) = scancode.take() {

@@ -1,4 +1,4 @@
-use super::{align_up, Locked};
+use super::Locked;
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr;
 
