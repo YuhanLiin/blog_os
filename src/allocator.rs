@@ -1,6 +1,7 @@
 pub mod bump;
+pub mod fixed_size_block;
+pub mod linked_list;
 
-use linked_list_allocator::LockedHeap;
 use x86_64::{
     structures::paging::{
         mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
@@ -13,7 +14,7 @@ pub struct Locked<A> {
 }
 
 impl<A> Locked<A> {
-    pub fn new(inner: A) -> Self {
+    pub const fn new(inner: A) -> Self {
         Locked {
             inner: spin::Mutex::new(inner),
         }
@@ -28,7 +29,8 @@ pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<fixed_size_block::FixedSizeBlockAllocator> =
+    Locked::new(fixed_size_block::FixedSizeBlockAllocator::new());
 
 pub fn init_heap(
     mapper: &mut impl Mapper<Size4KiB>,
@@ -87,5 +89,14 @@ mod test {
             let val = Box::new(i);
             assert_eq!(*val, i);
         }
+    });
+
+    test!(many_boxes_long_lived {
+        let long_lived = Box::new(10);
+        for i in 0..10000 {
+            let val = Box::new(i);
+            assert_eq!(*val, i);
+        }
+        assert_eq!(*long_lived, 10);
     });
 }

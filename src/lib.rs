@@ -4,7 +4,10 @@
 #![test_runner(crate::testing::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
+#![feature(const_fn)]
+#![feature(const_in_array_repeat_expressions)]
 #![feature(alloc_error_handler)]
+#![feature(alloc_layout_extra)]
 
 extern crate alloc;
 
